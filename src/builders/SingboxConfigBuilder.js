@@ -167,8 +167,14 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
             // sing-box names port-hopping/bandwidth fields differently from the
             // share-link shape, and rejects unknown fields outright
             if (sanitized.ports) {
+                // sing-box rejects a server_ports entry that has no ':'.
                 const ranges = String(sanitized.ports).split(',')
-                    .map(range => range.trim().replace('-', ':'))
+                    .map(range => {
+                        const trimmed = range.trim();
+                        if (!trimmed || trimmed.includes(':')) return trimmed;
+                        if (trimmed.includes('-')) return trimmed.replace('-', ':');
+                        return `${trimmed}:${trimmed}`;
+                    })
                     .filter(Boolean);
                 if (ranges.length > 0) {
                     sanitized.server_ports = ranges;

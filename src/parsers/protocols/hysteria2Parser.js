@@ -14,6 +14,14 @@ function authorityHopPorts(portText) {
         // Keep the raw port text when it is not valid percent-encoding.
     }
     if (!/[,-]/.test(text)) return undefined;
+    // `host:23200,47000-50000` puts the primary listen port first. Clients ignore
+    // that port once a hop list is set, so it must not be repeated there.
+    const comma = text.indexOf(',');
+    if (comma !== -1) {
+        const first = text.slice(0, comma).trim();
+        const rest = text.slice(comma + 1).trim();
+        if (/^\d+$/.test(first) && rest) return rest;
+    }
     return text;
 }
 

@@ -73,6 +73,17 @@ describe('issue #428: hysteria2 port hopping', () => {
         expect(converted.server_ports).toEqual(['20000:30000', '40000:50000']);
     });
 
+    it('writes a bare hop port as a sing-box range', () => {
+        const converted = SingboxConfigBuilder.prototype.convertProxy({
+            tag: 'hop',
+            type: 'hysteria2',
+            server: 'example.com',
+            server_port: 443,
+            ports: '23200,47000-50000'
+        });
+        expect(converted.server_ports).toEqual(['23200:23200', '47000:50000']);
+    });
+
     it('reads a hop list from the official URI authority', () => {
         const proxy = parseHysteria2('hysteria2://pass@example.com:20000-50000/?sni=example.com#hop');
         expect(proxy.server).toBe('example.com');
@@ -83,7 +94,27 @@ describe('issue #428: hysteria2 port hopping', () => {
     it('reads mixed ports from the authority, including percent-encoded commas', () => {
         const proxy = parseHysteria2('hysteria2://pass@example.com:123%2C5000-6000/?insecure=1#hop');
         expect(proxy.server_port).toBe(123);
-        expect(proxy.ports).toBe('123,5000-6000');
+        expect(proxy.ports).toBe('5000-6000');
+    });
+
+    it('keeps the primary port out of the hop list', () => {
+        const proxy = parseHysteria2('hysteria2://pass@xjp3.example.cn:23200,47000-50000?alpn=h3&sni=xjp3.example.cn#test');
+        expect(proxy.server_port).toBe(23200);
+        expect(proxy.ports).toBe('47000-50000');
+
+        const singbox = SingboxConfigBuilder.prototype.convertProxy(proxy);
+        expect(singbox.server_port).toBe(23200);
+        expect(singbox.server_ports).toEqual(['47000:50000']);
+        expect(singbox).not.toHaveProperty('ports');
+
+        const clash = ClashConfigBuilder.prototype.convertProxy(proxy);
+        expect(clash.port).toBe(23200);
+        expect(clash.ports).toBe('47000-50000');
+    });
+
+    it('keeps a hop list that starts with a range', () => {
+        const proxy = parseHysteria2('hysteria2://pass@example.com:20000-30000,40000-50000/#hop');
+        expect(proxy.ports).toBe('20000-30000,40000-50000');
     });
 
     it('reads an IPv6 authority hop range', () => {
