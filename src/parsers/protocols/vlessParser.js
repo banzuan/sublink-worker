@@ -11,6 +11,10 @@ export function parseVless(url) {
             enabled: true,
             fingerprint: 'chrome'
         };
+        // Mihomo-only Reality hint. sing-box has no equivalent key and rejects unknown fields.
+        if (parseBool(params['support-x25519mlkem768'])) {
+            tls.reality.support_x25519mlkem768 = true;
+        }
     }
     const transport = params.type !== 'tcp' ? createTransportConfig(params) : undefined;
 

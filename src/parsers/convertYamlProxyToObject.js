@@ -1,3 +1,5 @@
+import { parseBool, parseHopInterval } from '../utils.js';
+
 export function convertYamlProxyToObject(p) {
     if (!p || typeof p !== 'object' || !p.type) return null;
     const type = String(p.type).toLowerCase();
@@ -77,7 +79,14 @@ export function convertYamlProxyToObject(p) {
                     server_name: p.servername || p.sni,
                     insecure: !!p['skip-cert-verify'],
                     ...(reality
-                        ? { reality: { enabled: true, public_key: reality['public-key'], short_id: reality['short-id'] } }
+                        ? {
+                            reality: {
+                                enabled: true,
+                                public_key: reality['public-key'],
+                                short_id: reality['short-id'],
+                                ...(parseBool(reality['support-x25519mlkem768']) ? { support_x25519mlkem768: true } : {})
+                            }
+                        }
                         : {})
                 }
                 : { enabled: false };
@@ -189,8 +198,6 @@ export function convertYamlProxyToObject(p) {
                 obfs.type = p.obfs;
                 obfs.password = p['obfs-password'];
             }
-            const hopIntervalRaw = p['hop-interval'];
-            const hopInterval = Number(hopIntervalRaw);
             return {
                 tag: name,
                 type: 'hysteria2',
@@ -204,7 +211,7 @@ export function convertYamlProxyToObject(p) {
                 up: p.up,
                 down: p.down,
                 ports: p.mport || p.ports,
-                hop_interval: Number.isNaN(hopInterval) ? hopIntervalRaw : hopInterval,
+                hop_interval: parseHopInterval(p['hop-interval']),
                 alpn: toArray(p.alpn),
                 fast_open: typeof p['fast-open'] !== 'undefined' ? !!p['fast-open'] : undefined
             };

@@ -1,9 +1,27 @@
-import { parseServerInfo, parseUrlParams, createTlsConfig, parseMaybeNumber, parseArray, parseBool } from '../../utils.js';
+import { parseServerInfo, parseUrlParams, createTlsConfig, parseMaybeNumber, parseHopInterval, parseArray, parseBool } from '../../utils.js';
+
+// Official URIs put the hop list in the authority (`host:20000-50000`). parseInt keeps only the first number.
+function authorityHopPorts(portText) {
+    if (!portText) return undefined;
+    let text = String(portText).trim();
+    // A fragment can sit on the authority when the link has no query string.
+    const hashIndex = text.indexOf('#');
+    if (hashIndex !== -1) text = text.slice(0, hashIndex);
+    text = text.replace(/\/+$/, '');
+    try {
+        text = decodeURIComponent(text);
+    } catch {
+        // Keep the raw port text when it is not valid percent-encoding.
+    }
+    if (!/[,-]/.test(text)) return undefined;
+    return text;
+}
 
 export function parseHysteria2(url) {
     const { addressPart, params, name } = parseUrlParams(url);
     let host;
     let port;
+    let portText;
     let password = null;
 
     if (addressPart.includes('@')) {
@@ -11,11 +29,13 @@ export function parseHysteria2(url) {
         const parsed = parseServerInfo(serverInfo);
         host = parsed.host;
         port = parsed.port;
+        portText = parsed.portText;
         password = decodeURIComponent(uuid);
     } else {
         const parsed = parseServerInfo(addressPart);
         host = parsed.host;
         port = parsed.port;
+        portText = parsed.portText;
         password = params.auth;
     }
 
@@ -28,7 +48,7 @@ export function parseHysteria2(url) {
         obfs.password = params['obfs-password'];
     }
 
-    const hopInterval = parseMaybeNumber(params['hop-interval'] ?? params['hop_interval']);
+    const hopInterval = parseHopInterval(params['hop-interval'] ?? params['hop_interval']);
 
     return {
         tag: name,
@@ -42,7 +62,7 @@ export function parseHysteria2(url) {
         recv_window_conn: params.recv_window_conn,
         up: params.up ?? (params.upmbps ? parseMaybeNumber(params.upmbps) : undefined),
         down: params.down ?? (params.downmbps ? parseMaybeNumber(params.downmbps) : undefined),
-        ports: params.mport || params.ports,
+        ports: params.mport || params.ports || authorityHopPorts(portText),
         hop_interval: hopInterval,
         alpn: parseArray(params.alpn),
         fast_open: parseBool(params['fast-open'])

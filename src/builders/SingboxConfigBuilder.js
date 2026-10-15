@@ -156,6 +156,13 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         // xudp is default in newer versions
         delete sanitized.packet_encoding;
 
+        // Mihomo Reality hint. sing-box rejects unknown TLS keys.
+        if (sanitized.tls?.reality?.support_x25519mlkem768 !== undefined) {
+            const reality = { ...sanitized.tls.reality };
+            delete reality.support_x25519mlkem768;
+            sanitized.tls = { ...sanitized.tls, reality };
+        }
+
         if (sanitized.type === 'hysteria2') {
             // sing-box names port-hopping/bandwidth fields differently from the
             // share-link shape, and rejects unknown fields outright

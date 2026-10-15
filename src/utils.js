@@ -256,17 +256,17 @@ export function parseServerInfo(serverInfo) {
 	if (!serverInfo || typeof serverInfo !== 'string') {
 		return { host: null, port: null };
 	}
-	let host, port;
+	let host, portText;
 	if (serverInfo.startsWith('[')) {
 		const closeBracketIndex = serverInfo.indexOf(']');
 		host = serverInfo.slice(1, closeBracketIndex);
-		port = serverInfo.slice(closeBracketIndex + 2); // +2 to skip ']:'
+		portText = serverInfo.slice(closeBracketIndex + 2); // +2 to skip ']:'
 	} else {
 		const lastColonIndex = serverInfo.lastIndexOf(':');
 		host = serverInfo.slice(0, lastColonIndex);
-		port = serverInfo.slice(lastColonIndex + 1);
+		portText = serverInfo.slice(lastColonIndex + 1);
 	}
-	return { host, port: parseInt(port) };
+	return { host, port: parseInt(portText), portText };
 }
 
 export function parseUrlParams(url) {
@@ -335,6 +335,18 @@ export function parseMaybeNumber(value) {
 	if (value === undefined || value === null) return undefined;
 	const num = Number(value);
 	return Number.isNaN(num) ? undefined : num;
+}
+
+// Share links use a duration ("30s"); Mihomo and Surge use plain seconds.
+// A range ("15-30") is a random interval and is left unset.
+export function parseHopInterval(value) {
+	if (value === undefined || value === null || value === '') return undefined;
+	if (typeof value === 'number') {
+		return Number.isFinite(value) ? value : undefined;
+	}
+	const match = String(value).trim().match(/^(\d+)s?$/i);
+	if (!match) return undefined;
+	return Number(match[1]);
 }
 
 // Parse comma-separated string to array

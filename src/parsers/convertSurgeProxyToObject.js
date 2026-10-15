@@ -1,3 +1,5 @@
+import { parseHopInterval } from '../utils.js';
+
 /**
  * Parse Surge proxy line format and convert to internal (Sing-Box) format
  * 
@@ -166,7 +168,11 @@ export function convertSurgeProxyToObject(line) {
             };
 
         case 'hysteria2':
-        case 'hy2':
+        case 'hy2': {
+            const hopPorts = params['port-hopping']
+                ? String(params['port-hopping']).split(';').map(part => part.trim()).filter(Boolean).join(',')
+                : undefined;
+            const hopInterval = parseHopInterval(params['port-hopping-interval']);
             return {
                 tag,
                 type: 'hysteria2',
@@ -182,8 +188,11 @@ export function convertSurgeProxyToObject(line) {
                 obfs: params['obfs-password'] ? {
                     type: params.obfs || 'salamander',
                     password: params['obfs-password']
-                } : undefined
+                } : undefined,
+                ...(hopPorts ? { ports: hopPorts } : {}),
+                ...(hopInterval !== undefined ? { hop_interval: hopInterval } : {})
             };
+        }
 
         case 'http':
         case 'https':

@@ -109,6 +109,15 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
                 if (proxy.tls?.alpn) {
                     surgeProxy += `, alpn=${proxy.tls.alpn.join(',')}`;
                 }
+                if (proxy.ports) {
+                    const hopping = String(proxy.ports).split(',').map(part => part.trim()).filter(Boolean).join(';');
+                    if (hopping) {
+                        surgeProxy += `, port-hopping=${hopping}`;
+                    }
+                }
+                if (proxy.hop_interval !== undefined) {
+                    surgeProxy += `, port-hopping-interval=${proxy.hop_interval}`;
+                }
                 break;
             case 'tuic':
                 surgeProxy = `${proxy.tag} = tuic, ${proxy.server}, ${proxy.server_port}, password=${proxy.password}, uuid=${proxy.uuid}`;
