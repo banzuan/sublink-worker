@@ -163,6 +163,15 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
             sanitized.tls = { ...sanitized.tls, reality };
         }
 
+        if (sanitized.type === 'socks') {
+            // sing-box types the SOCKS version as a string. Share links are SOCKS5.
+            if (sanitized.version === undefined || sanitized.version === null || sanitized.version === '') {
+                sanitized.version = '5';
+            } else {
+                sanitized.version = String(sanitized.version);
+            }
+        }
+
         if (sanitized.type === 'hysteria2') {
             // sing-box names port-hopping/bandwidth fields differently from the
             // share-link shape, and rejects unknown fields outright

@@ -304,6 +304,16 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
                     ...(minIdleSession !== undefined ? { 'min-idle-session': minIdleSession } : {}),
                 };
             }
+            case 'socks':
+                return {
+                    name: proxy.tag,
+                    type: 'socks5',
+                    server: proxy.server,
+                    port: proxy.server_port,
+                    ...(proxy.username ? { username: proxy.username } : {}),
+                    ...(proxy.password ? { password: proxy.password } : {}),
+                    ...(proxy.udp !== undefined ? { udp: proxy.udp } : {})
+                };
             default:
                 return proxy; // Return as-is if no specific conversion is defined
         }

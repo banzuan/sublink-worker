@@ -194,6 +194,18 @@ export function convertSurgeProxyToObject(line) {
             };
         }
 
+        case 'socks5':
+        case 'socks':
+            return {
+                tag,
+                type: 'socks',
+                server,
+                server_port: port,
+                version: '5',
+                ...(params.username ? { username: params.username } : {}),
+                ...(params.password ? { password: params.password } : {})
+            };
+
         case 'http':
         case 'https':
             // Skip HTTP/HTTPS proxy types
